@@ -156,11 +156,25 @@ export async function addAssetByAI(rawText: string) {
     - Complete nonsense
     
     EXTRACTION RULES:
-    - Indonesian stocks: add ".JK" suffix (BCA→BBCA.JK, BRI→BBRI.JK, Mandiri→BMRI.JK, Telkom→TLKM.JK)
-    - Crypto: BTC→BTC-USD, ETH→ETH-USD, BNB→BNB-USD, SOL→SOL-USD
+    - Stocks: Add correct suffix based on market:
+      * Indonesia (.JK): BCA→BBCA.JK, BRI→BBRI.JK, Mandiri→BMRI.JK, Telkom→TLKM.JK
+      * US (no suffix): Apple→AAPL, Tesla→TSLA, Microsoft→MSFT, Google→GOOGL
+      * Hong Kong (.HK): Tencent→0700.HK, Alibaba→9988.HK
+      * Japan (.T): Toyota→7203.T, Sony→6758.T
+      * Singapore (.SI): DBS→D05.SI, OCBC→O39.SI
+      * Malaysia (.KL): Maybank→1155.KL, Public Bank→1295.KL
+      * UK (.L): BP→BP.L, HSBC→HSBA.L
+      * Australia (.AX): CBA→CBA.AX, BHP→BHP.AX
+      * China Shanghai (.SS): Kweichow Moutai→600519.SS
+      * China Shenzhen (.SZ): Ping An→000001.SZ
+      * Korea (.KS): Samsung→005930.KS, Hyundai→005380.KS
+      * India (.NS or .BO): Reliance→RELIANCE.NS, TCS→TCS.NS
+      * Germany (.DE): SAP→SAP.DE, Volkswagen→VOW3.DE
+      * France (.PA): LVMH→MC.PA, Total→TTE.PA
+    - Crypto: BTC→BTC-USD, ETH→ETH-USD, BNB→BNB-USD, SOL→SOL-USD, ADA→ADA-USD
     - Property/Real Estate/Cash: extract mentioned price as manualPrice
     - Stocks/Crypto: set manualPrice=0 (auto-fetch)
-    - Convert: "juta"→1000000, "M"/"milyar"→1000000000, "ribu"→1000
+    - Convert: "juta"→1000000, "M"/"milyar"→1000000000, "ribu"→1000, "billion"→1000000000
     - "keping" for crypto means units/coins
     
     CRITICAL: Return ONLY pure JSON array, no markdown, no backticks, no explanation.
@@ -184,14 +198,18 @@ export async function addAssetByAI(rawText: string) {
     Single asset:
     "100 saham BCA" → [{"name":"Saham BCA","category":"STOCK","ticker":"BBCA.JK","amount":100,"manualPrice":0}]
     
+    "50 shares Apple" → [{"name":"Apple Stock","category":"STOCK","ticker":"AAPL","amount":50,"manualPrice":0}]
+    
+    "200 shares Tencent" → [{"name":"Tencent","category":"STOCK","ticker":"0700.HK","amount":200,"manualPrice":0}]
+    
+    "100 Toyota stock" → [{"name":"Toyota","category":"STOCK","ticker":"7203.T","amount":100,"manualPrice":0}]
+    
     Multiple assets:
     "beli 2 bitcoin dan 100 saham BRI" → [{"name":"Bitcoin","category":"CRYPTO","ticker":"BTC-USD","amount":2,"manualPrice":0},{"name":"Saham BRI","category":"STOCK","ticker":"BBRI.JK","amount":100,"manualPrice":0}]
     
-    "punya rumah 500 juta di BSD dan cash 50 juta" → [{"name":"Rumah BSD","category":"PROPERTY","ticker":null,"amount":1,"manualPrice":500000000},{"name":"Cash","category":"CASH","ticker":null,"amount":1,"manualPrice":50000000}]
+    "punya 50 Apple stock dan 100 Samsung" → [{"name":"Apple Stock","category":"STOCK","ticker":"AAPL","amount":50,"manualPrice":0},{"name":"Samsung","category":"STOCK","ticker":"005930.KS","amount":100,"manualPrice":0}]
     
     "kemarin beli bitcoin 2 keping terus beli rumah 50 juta di tangerang" → [{"name":"Bitcoin","category":"CRYPTO","ticker":"BTC-USD","amount":2,"manualPrice":0},{"name":"Rumah Tangerang","category":"PROPERTY","ticker":null,"amount":1,"manualPrice":50000000}]
-    
-    "0.5 BTC dan 1 ETH" → [{"name":"Bitcoin","category":"CRYPTO","ticker":"BTC-USD","amount":0.5,"manualPrice":0},{"name":"Ethereum","category":"CRYPTO","ticker":"ETH-USD","amount":1,"manualPrice":0}]
     
     Rejected:
     "halo" → {"error":"Input tidak valid. Contoh: '100 saham BCA', '0.5 Bitcoin', 'Rumah BSD 2M'"}
